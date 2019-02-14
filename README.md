@@ -14,4 +14,18 @@ pip3 install -e .
 
 # Run
 
+## Simple example
 `python3 examples/simple.py`
+
+## Image collection example with IP camera
+
+If using HikVision:
+```bash
+python examples/collect_frames_ipcam.py 'rtsp://admin:caninos123%21%40%23@192.168.1.64:554/'
+```
+
+If using aivision:
+```bash
+python examples/collect_frames_ipcam.py 'rtsp://root:pass@192.168.150.146:554/ufirststream'
+```
+
