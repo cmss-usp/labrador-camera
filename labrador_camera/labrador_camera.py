@@ -20,20 +20,20 @@ class LabradorCamera(object):
                 retries, max_retries = 0, 3
                 while retries < max_retries and not self.capture.isOpened():
                     time.sleep(2)
-                    self.capture.open(device)
+                    self.capture.open(self.device)
                     retries += 1
         except Exception as e:
-            logging.error("Can't connect to camera {}".format(str(device)))
+            logging.error("Can't connect to camera {}".format(str(self.device)))
             logging.error("Reason: {}".format(str(e)))
             return None
 
         if self.capture is None or not self.capture.isOpened():
-            logging.error("Can't connect to camera {}".format(str(device)))
+            logging.error("Can't connect to camera {}".format(str(self.device)))
             return None
 
         if self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) == 0 or self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT) == 0:
             self.capture.release()
-            logging.error("Câmera {} não está funcionando corretamente. WIDTH/HEIGH == 0".format(str(device)))
+            logging.error("Câmera {} não está funcionando corretamente. WIDTH/HEIGH == 0".format(str(self.device)))
             return None
 
         return True
