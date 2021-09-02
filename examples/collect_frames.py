@@ -24,5 +24,8 @@ while True:
     save({"resolution": "hd"})
     time.sleep(0.2)
 
+    save({"resolution": "hd", "video_codec": "mjpg"})
+    time.sleep(0.2)
+
     save({"resolution": "full-hd"})
     time.sleep(0.2)
