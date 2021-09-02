@@ -1,5 +1,4 @@
 from labrador_camera import LabradorCamera
-import cv2
 
 lab_cam = LabradorCamera()
 
