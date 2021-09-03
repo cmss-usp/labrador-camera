@@ -2,14 +2,43 @@ import cv2, time, logging
 
 
 class LabradorCamera(object):
+    def __init__(self, device=0):
+        def str2int(device):
+            try:
+                return int(device)
+            except Exception as e:
+                return device
+        self.device = str2int(device)
+        self.capture = None
+
+    def open(self):
+        self.capture = cv2.VideoCapture(self.device)
+        return self.capture.isOpened()
+
+    def read(self):
+        return self.capture.read()
+
+    def save_frame(self, filename):
+        ret, frame = self.read()
+        if not ret:
+            logging.error("Error reading frame.")
+            return False
+
+        cv2.imwrite(filename, frame)
+        return True
+
+    def __del__(self):
+        self.capture.release()
+
+class LabradorWebcam(LabradorCamera):
     resolutions = {
         "sd": {"width": 640, "height": 480},
         "hd": {"width": 1280, "height": 720},
         "full-hd": {"width": 1920, "height": 1080},
     }
 
-    def __init__(self, device=0):
-        self.device = device
+    def __init__(self, **kwargs):
+        super(LabradorWebcam, self).__init__(**kwargs)
 
     def open(self):
         try:
@@ -41,12 +70,12 @@ class LabradorCamera(object):
     def set_resolution(self, target_res):
         target_res = target_res.lower()
 
-        if target_res not in LabradorCamera.resolutions.keys():
+        if target_res not in LabradorWebcam.resolutions.keys():
             logging.error("Invalid target video resolution. Should be one of: sd, hd, full-hd. Given: {}.".format(target_res))
             return False
 
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH,  LabradorCamera.resolutions[target_res]["width"])
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, LabradorCamera.resolutions[target_res]["height"])
+        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH,  LabradorWebcam.resolutions[target_res]["width"])
+        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, LabradorWebcam.resolutions[target_res]["height"])
         
         # Show camera resolution after adjustment. It can be different from specified 
         # in command line due to limitations of camera
@@ -67,18 +96,3 @@ class LabradorCamera(object):
             return None
 
         return True
-
-    def read(self):
-        return self.capture.read()
-
-    def save_frame(self, filename):
-        ret, frame = self.read()
-        if not ret:
-            logging.error("Error reading frame.")
-            return False
-
-        cv2.imwrite(filename, frame)
-        return True
-
-    def __del__(self):
-        self.capture.release()

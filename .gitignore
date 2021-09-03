@@ -97,3 +97,5 @@ keys.json
 tests/support/crypto/ec_cert*
 
 examples/evaluation/*
+frames-*
+
