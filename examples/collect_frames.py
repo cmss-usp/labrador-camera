@@ -18,14 +18,17 @@ def save(params):
     lab_cam.save_frame(filename)
 
 while True:
-    save({"resolution": "sd"})
-    time.sleep(0.2)
 
+    save({"resolution": "hd"})
+    save({"resolution": "hd"})
+    save({"resolution": "hd"})
+    save({"resolution": "hd"})
     save({"resolution": "hd"})
     time.sleep(0.2)
 
-    save({"resolution": "hd", "video_codec": "mjpg"})
-    time.sleep(0.2)
-
+    save({"resolution": "full-hd"})
+    save({"resolution": "full-hd"})
+    save({"resolution": "full-hd"})
+    save({"resolution": "full-hd"})
     save({"resolution": "full-hd"})
     time.sleep(0.2)
