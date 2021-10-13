@@ -1,7 +1,7 @@
 import cv2, time, logging
 
 
-class LabradorCamera(object):
+class LabradorCameraCV(object):
     def __init__(self, device=0):
         def str2int(device):
             try:
@@ -30,7 +30,7 @@ class LabradorCamera(object):
     def __del__(self):
         self.capture.release()
 
-class LabradorWebcam(LabradorCamera):
+class LabradorWebcam(LabradorCameraCV):
     resolutions = {
         "sd": {"width": 640, "height": 480},
         "hd": {"width": 1280, "height": 720},

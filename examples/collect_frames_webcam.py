@@ -18,6 +18,10 @@ def save_webcam(params):
     lab_webcam.save_frame(filename)
 
 while True:
+    save_webcam({"resolution": "full-hd"})
+    time.sleep(0.2)
+    continue
+
     save_webcam({"resolution": "hd"})
     save_webcam({"resolution": "hd"})
     save_webcam({"resolution": "hd"})

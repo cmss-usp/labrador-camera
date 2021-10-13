@@ -1,10 +1,10 @@
-from labrador_camera import LabradorCamera
+from labrador_camera import LabradorCameraCV
 from datetime import datetime
 import sys, os, time
 
 device = sys.argv[1] if len(sys.argv) == 2 else "rtsp://admin:caninos123%21%40%23@192.168.1.64:554/"
 
-lab_ipcam = LabradorCamera(device=device)
+lab_ipcam = LabradorCameraCV(device=device)
 lab_ipcam.open()
 
 frames_path = os.getcwd() + f"/frames-{device[-17:-5]}/"
