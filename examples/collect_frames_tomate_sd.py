@@ -10,6 +10,7 @@ photos_dir = os.getenv("PHOTOS_DIR") or os.getcwd() + "/frames-tomate/"
 tomate_cam_sd = TomateCameraSD(scripts_dir=scripts_dir, photos_dir=photos_dir)
 tomate_cam_sd.open()
 while True:
-    tomate_cam_sd.save_frame()
-    # img = tomate_cam_sd.read()
+    # tomate_cam_sd.save_frame()
+    ret, img = tomate_cam_sd.read()
+    print(ret)
     time.sleep(0.1)

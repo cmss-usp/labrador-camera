@@ -15,7 +15,12 @@ class TomateCameraSD():
     def read(self):
         photo_info = self.save_frame()
         if photo_info:
-            return cv2.imread(photo_info["last_photo"], 0)
+            try:
+                img = cv2.imread(photo_info["last_photo"], 0)
+                return True, img
+            except Exception as e:
+                print(e)
+                return False, None
 
     def save_frame(self):
         code = os.system(f"cd {self.scripts_dir} && ./adb_take_photo.sh one {self.photos_dir}")
