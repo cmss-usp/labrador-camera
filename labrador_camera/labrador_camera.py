@@ -1,4 +1,4 @@
-import cv2, time, logging
+import cv2, time, logging, queue, threading
 
 
 class LabradorCameraCV(object):
@@ -30,6 +30,10 @@ class LabradorCameraCV(object):
     def __del__(self):
         self.capture.release()
 
+    def get_dimensions(self):
+        return self.capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT) # considering 4K images
+
+
 class LabradorWebcam(LabradorCameraCV):
     resolutions = {
         "sd": {"width": 640, "height": 480},
@@ -37,8 +41,19 @@ class LabradorWebcam(LabradorCameraCV):
         "full-hd": {"width": 1920, "height": 1080},
     }
 
-    def __init__(self, **kwargs):
+    def __init__(self, low_fps_mode=True, **kwargs):
         super(LabradorWebcam, self).__init__(**kwargs)
+
+        # this is a workaround to the following:
+        #   when FPS is low, cv2's read() will not return the _latest_ frame, but a buffered one instead
+        #   with this workaround we discard buffered ones and always get the latest one
+        self.low_fps_mode = low_fps_mode
+        if self.low_fps_mode:
+            logging.debug("NOTE: using low fps mode! (use extra thread+queue to discard buffered frames)")
+            self.q = queue.Queue()
+            t = threading.Thread(target=self._reader)
+            t.daemon = True
+            t.start()
 
     def open(self):
         try:
@@ -96,3 +111,26 @@ class LabradorWebcam(LabradorCameraCV):
             return None
 
         return True
+
+    def read(self):
+        if self.low_fps_mode:
+            return True, self.q.get()
+        else:
+            return self.capture.read()
+
+    # read frames as soon as they are available, keeping only most recent one
+    def _reader(self):
+        while True:
+            if not self.capture:
+                time.sleep(1)
+                continue
+            ret, frame = self.capture.read()
+            if not ret:
+                break
+            if not self.q.empty():
+                try:
+                    self.q.get_nowait()   # discard previous (unprocessed) frame
+                except queue.Empty:
+                    pass
+            self.q.put(frame)
+            # time.sleep(0.1)

@@ -35,3 +35,6 @@ class TomateCameraSD():
             return photo_info
         except Exception as e:
             print(f"Error saving frame: {e}")
+
+    def get_dimensions(self):
+        return 4608, 3456 # considering 4K images
