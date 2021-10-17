@@ -28,10 +28,13 @@ class LabradorCameraCV(object):
         return True
 
     def __del__(self):
+        logging.debug("Will release capture.")
         self.capture.release()
 
     def get_dimensions(self):
-        return self.capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT) # considering 4K images
+        width, height = self.capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        logging.info(f"LabradorCamera dimensions are: height = {height} width = {width}")
+        return height, width
 
 
 class LabradorWebcam(LabradorCameraCV):
@@ -51,9 +54,20 @@ class LabradorWebcam(LabradorCameraCV):
         if self.low_fps_mode:
             logging.debug("NOTE: using low fps mode! (use extra thread+queue to discard buffered frames)")
             self.q = queue.Queue()
-            t = threading.Thread(target=self._reader)
-            t.daemon = True
-            t.start()
+
+    def release(self):
+        logging.debug("Will release capture.")
+        self.stop_unbuffer_thread()
+        self.capture.release()
+
+    def stop_unbuffer_thread(self):
+        self.unbuffer_thread_running = False
+        self.unbuffer_thread.join()
+
+    def start_unbuffer_thread(self):
+        self.unbuffer_thread = threading.Thread(target=self.unbuffer_reader)
+        self.unbuffer_thread_running = True
+        self.unbuffer_thread.start()
 
     def open(self):
         try:
@@ -66,6 +80,8 @@ class LabradorWebcam(LabradorCameraCV):
                     time.sleep(2)
                     self.capture.open(self.device)
                     retries += 1
+            if self.capture.isOpened():
+                self.start_unbuffer_thread()
         except Exception as e:
             logging.error("Can't connect to camera {}".format(str(self.device)))
             logging.error("Reason: {}".format(str(e)))
@@ -99,7 +115,7 @@ class LabradorWebcam(LabradorCameraCV):
         if self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) == 0 or self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT) == 0:
             logging.error("Abort: effective camera width or height is zero.")
             return False
-        
+
         return True
 
     def set_params(self, resolution="sd", video_frame_rate=7.0, video_codec="default"):
@@ -119,8 +135,9 @@ class LabradorWebcam(LabradorCameraCV):
             return self.capture.read()
 
     # read frames as soon as they are available, keeping only most recent one
-    def _reader(self):
-        while True:
+    def unbuffer_reader(self):
+        logging.info("unbuffer_reader started.")
+        while self.unbuffer_thread_running:
             if not self.capture:
                 time.sleep(1)
                 continue
@@ -133,4 +150,4 @@ class LabradorWebcam(LabradorCameraCV):
                 except queue.Empty:
                     pass
             self.q.put(frame)
-            # time.sleep(0.1)
+        logging.info("unbuffer_reader stopped.")
