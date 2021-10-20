@@ -19,22 +19,24 @@ class TomateCameraSD():
         photo_info = self.save_frame()
         if photo_info:
             try:
-                img = cv2.imread(photo_info["last_photo"])
+                img = cv2.imread(photo_info["new_photo"])
                 return True, img
             except Exception as e:
                 print(e)
                 return False, None
+        else:
+            return False, None
 
     def save_frame(self):
         resp = subprocess.run(f"cd {self.scripts_dir} && ./adb_take_photo.sh one {self.photos_dir}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
             out = resp.stdout.decode()
-            photo_info = list(filter(lambda l: '{"last_photo":' in l, out.split("\n")))[0]
+            photo_info = list(filter(lambda l: '{"new_photo":' in l, out.split("\n")))[0]
             photo_info = json.loads(photo_info)
             print("Photo was saved: ", photo_info)
             return photo_info
         except Exception as e:
-            print(f"Error saving frame: {e}")
+            logging.exception(f"Error saving frame.")
 
     def get_dimensions(self):
         return 3456, 4608 # considering 4K images
