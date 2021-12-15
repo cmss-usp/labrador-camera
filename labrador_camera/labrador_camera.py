@@ -36,6 +36,9 @@ class LabradorCameraCV(object):
         logging.info(f"LabradorCamera dimensions are: height = {height} width = {width}")
         return height, width
 
+    def __repr__(self):
+        return str({"device": self.device, "isOpened": self.capture and self.capture.isOpened() or False})
+
 
 class LabradorWebcam(LabradorCameraCV):
     resolutions = {
@@ -52,7 +55,7 @@ class LabradorWebcam(LabradorCameraCV):
         #   with this workaround we discard buffered ones and always get the latest one
         self.low_fps_mode = low_fps_mode
         if self.low_fps_mode:
-            logging.debug("NOTE: using low fps mode! (use extra thread+queue to discard buffered frames)")
+            logging.debug("NOTE: using low fps mode! (will use extra thread+queue to discard buffered frames)")
             self.q = queue.Queue()
 
     def release(self):
@@ -96,6 +99,7 @@ class LabradorWebcam(LabradorCameraCV):
             logging.error("Câmera {} não está funcionando corretamente. WIDTH/HEIGH == 0".format(str(self.device)))
             return None
 
+        logging.info("LabradorWebcam opened")
         return True
 
     def set_resolution(self, target_res):

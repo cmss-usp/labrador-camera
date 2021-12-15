@@ -28,7 +28,9 @@ class TomateCameraSD():
             return False, None
 
     def save_frame(self):
-        resp = subprocess.run(f"cd {self.scripts_dir} && ./adb_take_photo.sh one {self.photos_dir}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = f"cd {self.scripts_dir} && ./adb_take_photo.sh one {self.photos_dir}"
+        logging.debug(f"Will run cmd: {cmd}")
+        resp = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
             out = resp.stdout.decode()
             photo_info = list(filter(lambda l: '{"new_photo":' in l, out.split("\n")))[0]
