@@ -1,6 +1,6 @@
 from labrador_camera import LabradorWebcam
 from datetime import datetime
-import sys, os, time
+import sys, os, time, cv2
 
 device = sys.argv[1] if len(sys.argv) == 2 else 0
 
@@ -16,6 +16,8 @@ def save_webcam(params):
     filename = frames_path + f"{datetime.now()}-{params['resolution']}.jpg"
     print(f"Saving {filename}")
     lab_webcam.save_frame(filename)
+
+lab_webcam.capture.set(cv2.CAP_PROP_FOURCC,cv2.VideoWriter_fourcc('M','J','P','G'))
 
 while True:
     save_webcam({"resolution": "full-hd"})
