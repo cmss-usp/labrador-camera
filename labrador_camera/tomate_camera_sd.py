@@ -46,12 +46,6 @@ class TomateCameraSD():
             if not ret:
                 break
             self.latest_frame_info = ret, frame
-            # if not self.queue1.empty():
-            #     try:
-            #         self.queue1.get_nowait()   # discard previous (unprocessed) frame
-            #     except queue.Empty:
-            #         pass
-            # self.queue1.put(frame)   # add most recent frame to queue
         logging.info("continous_reader stopped.")
 
     def read_sync(self):
@@ -59,6 +53,7 @@ class TomateCameraSD():
         if photo_info:
             try:
                 img = cv2.imread(photo_info["new_photo"])
+                os.remove(photo_info["new_photo"])
                 return True, img
             except Exception as e:
                 print(e)
