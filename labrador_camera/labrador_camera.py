@@ -1,4 +1,5 @@
 import cv2, time, logging, queue, threading
+import numpy as np;
 
 
 class LabradorCameraCV(object):
@@ -99,7 +100,12 @@ class LabradorWebcam(LabradorCameraCV):
             self.capture.release()
             logging.error("Câmera {} não está funcionando corretamente. WIDTH/HEIGH == 0".format(str(self.device)))
             return None
-
+        
+        self.orig_width = int(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.orig_height = int(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.min_dim = int(min(self.orig_width, self.orig_height))
+        self.max_dim = int(max(self.orig_width, self.orig_height))
+        
         logging.info("LabradorWebcam opened")
         return True
 
@@ -124,6 +130,11 @@ class LabradorWebcam(LabradorCameraCV):
         if self.capture.get(cv2.CAP_PROP_FRAME_WIDTH) == 0 or self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT) == 0:
             logging.error("Abort: effective camera width or height is zero.")
             return False
+            
+        self.orig_width = int(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.orig_height = int(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.min_dim = int(min(self.orig_width, self.orig_height))
+        self.max_dim = int(max(self.orig_width, self.orig_height))
 
         return True
 
@@ -139,10 +150,25 @@ class LabradorWebcam(LabradorCameraCV):
 
     def read(self):
         if self.low_fps_mode:
-            return True, self.q.get()
+            img = self.q.get()
+            img2 = self.q.get() #double lower half
         else:
-            return self.capture.read()
-
+            _ret, img = self.capture.read()
+            _ret, img2 = self.capture.read() #double lower half
+        
+        #img = img[(self.orig_height-self.min_dim)//2:(self.orig_height+self.min_dim)//2,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] # crop
+        
+        composed_frame = np.zeros((self.min_dim,self.min_dim, 3), dtype=np.uint8) #double lower half
+        composed_frame[:self.min_dim//2,:]=img[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2]
+        composed_frame[-1-self.min_dim//2:-1,:]=img2[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2]
+        
+        #composed_frame = np.zeros((self.orig_width,self.orig_width, 3), dtype=np.uint8) #padding
+        #composed_frame.fill(255) # padding in grayscale
+        #composed_frame[(self.max_dim-self.orig_height)//2:(self.max_dim+self.orig_height)//2,(self.max_dim-self.orig_width)//2:(self.max_dim+self.orig_width)//2]=img
+        
+        #return True , img
+        return True , composed_frame
+        
     # read frames as soon as they are available, keeping only most recent one
     def unbuffer_reader(self):
         logging.info("unbuffer_reader started.")
