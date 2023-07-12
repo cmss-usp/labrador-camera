@@ -1,4 +1,5 @@
 import cv2, time, logging, queue, threading
+import numpy as np
 
 
 class LabradorCameraCV(object):
@@ -45,8 +46,10 @@ class LabradorWebcam(LabradorCameraCV):
         "sd": {"width": 640, "height": 480},
         "hd": {"width": 1280, "height": 720},
         "full-hd": {"width": 1920, "height": 1080},
+        "elp": {"width": 2048, "height": 1536}, # add ELP
         "4k": {"width": 3840, "height": 2160},
     }
+    exposure = 50 #  add exposure control
 
     def __init__(self, low_fps_mode=True, **kwargs):
         super(LabradorWebcam, self).__init__(**kwargs)
@@ -85,6 +88,10 @@ class LabradorWebcam(LabradorCameraCV):
                     self.capture.open(self.device)
                     retries += 1
             if self.capture.isOpened():
+                self.set_resolution("elp")  #add ELP
+                self.capture.set(cv2.CAP_PROP_AUTO_EXPOSURE,1.0) #  add exposure control
+                self.capture.set(cv2.CAP_PROP_EXPOSURE,self.exposure) #  add exposure control
+                     
                 self.start_unbuffer_thread()
         except Exception as e:
             logging.exception("Can't connect to camera {}".format(str(self.device)))
@@ -146,6 +153,7 @@ class LabradorWebcam(LabradorCameraCV):
     # read frames as soon as they are available, keeping only most recent one
     def unbuffer_reader(self):
         logging.info("unbuffer_reader started.")
+        aux1 = time.time() #  add exposure control
         while self.unbuffer_thread_running:
             if not self.capture:
                 time.sleep(1)
@@ -159,4 +167,13 @@ class LabradorWebcam(LabradorCameraCV):
                 except queue.Empty:
                     pass
             self.q.put(frame)
+            
+            if (time.time() - aux1 > 1): #  add start exposure control
+	            light = np.mean(frame, axis=(0,1))
+	            light = (0.114*light[0]+0.587*light[1]+0.299*light[2])/255
+	            #weights from opencv and normalised to [0;1]
+	            self.exposure = int(self.exposure*(1.75-1.50*light))
+	            self.capture.set(cv2.CAP_PROP_EXPOSURE,self.exposure)
+	            aux1 = time.time() #  add end exposure control
+	            
         logging.info("unbuffer_reader stopped.")
