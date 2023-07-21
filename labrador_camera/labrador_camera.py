@@ -151,23 +151,32 @@ class LabradorWebcam(LabradorCameraCV):
     def read(self):
         if self.low_fps_mode:
             img = self.q.get()
-            img2 = self.q.get() #double lower half
+            return True, img
         else:
             _ret, img = self.capture.read()
+        
+            #img = img[(self.orig_height-self.min_dim)//2:(self.orig_height+self.min_dim)//2,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] # crop
+        
+            composed_frame = np.zeros((self.min_dim,self.min_dim, 3), dtype=np.uint8) #double lower half
+            composed_frame[:self.min_dim//2,:]=img[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2]
+        
+            #composed_frame = np.zeros((self.orig_width,self.orig_width, 3), dtype=np.uint8) #padding
+            #composed_frame.fill(255) # padding in grayscale
+            #composed_frame[(self.max_dim-self.orig_height)//2:(self.max_dim+self.orig_height)//2,(self.max_dim-self.orig_width)//2:(self.max_dim+self.orig_width)//2]=img
+            #img = composed
+            
             _ret, img2 = self.capture.read() #double lower half
+            composed_frame[-1-self.min_dim//2:-1,:]=img2[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] #double lower half
+            img = composed
         
-        #img = img[(self.orig_height-self.min_dim)//2:(self.orig_height+self.min_dim)//2,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] # crop
+            return True , img
         
-        composed_frame = np.zeros((self.min_dim,self.min_dim, 3), dtype=np.uint8) #double lower half
-        composed_frame[:self.min_dim//2,:]=img[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2]
-        composed_frame[-1-self.min_dim//2:-1,:]=img2[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2]
-        
-        #composed_frame = np.zeros((self.orig_width,self.orig_width, 3), dtype=np.uint8) #padding
-        #composed_frame.fill(255) # padding in grayscale
-        #composed_frame[(self.max_dim-self.orig_height)//2:(self.max_dim+self.orig_height)//2,(self.max_dim-self.orig_width)//2:(self.max_dim+self.orig_width)//2]=img
-        
-        #return True , img
-        return True , composed_frame
+    def get_dimensions(self):
+        #width, height = self.orig_width, self.orig_height
+        width, height = self.min_dim, self.min_dim # crop or double lower half
+        #width, height = self.max_dim, self.max_dim # padding
+        logging.info(f"LabradorCamera dimensions are: height = {height} width = {width}")
+        return height, width
         
     # read frames as soon as they are available, keeping only most recent one
     def unbuffer_reader(self):
@@ -176,9 +185,29 @@ class LabradorWebcam(LabradorCameraCV):
             if not self.capture:
                 time.sleep(1)
                 continue
-            ret, frame = self.capture.read()
-            if not ret:
-                break
+                
+            ret = False
+            while not ret:
+            	ret, frame = self.capture.read()
+            	
+            #frame = frame[(self.orig_height-self.min_dim)//2:(self.orig_height+self.min_dim)//2,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] # crop
+        
+            composed_frame = np.zeros((self.min_dim,self.min_dim, 3), dtype=np.uint8) #double lower half
+            composed_frame[:self.min_dim//2,:]=frame[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2]
+        
+            #composed_frame = np.zeros((self.max_dim,self.max_dim, 3), dtype=np.uint8) #padding
+            #composed_frame.fill(255) # padding in grayscale
+            #composed_frame[(self.max_dim-self.orig_height)//2:(self.max_dim+self.orig_height)//2,(self.max_dim-self.orig_width)//2:(self.max_dim+self.orig_width)//2]=frame
+            #frame = composed_frame
+            
+            ret = False #double lower half
+            while not ret:
+                self.capture.grab()
+                ret, frame = self.capture.read()
+            	
+            composed_frame[-1-self.min_dim//2:-1,:]=frame[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] #double lower half
+            frame = composed_frame
+            
             if not self.q.empty():
                 try:
                     self.q.get_nowait()   # discard previous (unprocessed) frame
