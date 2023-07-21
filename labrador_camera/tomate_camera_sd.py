@@ -1,5 +1,6 @@
 import time, logging, os, subprocess, json, cv2, threading, queue
 from datetime import datetime
+import numpy as np
 
 class TomateCameraSD():
     # Note: this class requires a directory containing the camera tomate scripts.
@@ -14,6 +15,14 @@ class TomateCameraSD():
 
     def open(self, with_thread=True):
         os.system(f"cd {self.scripts_dir} && ./load_scripts.sh && ./adb_set_mode.sh photo")
+        ret = False
+        while not ret:
+            ret, frame = self.read_sync()
+        self.orig_width = int(frame.shape[1])
+        self.orig_height = int(frame.shape[0])
+        self.min_dim = int(min(self.orig_width, self.orig_height))
+        self.max_dim = int(max(self.orig_width, self.orig_height))
+        
         if with_thread:
             self.start_continous_reader_thread()
 
@@ -42,9 +51,27 @@ class TomateCameraSD():
     def continous_reader(self):
         logging.info("continous_reader started.")
         while self.continous_reader_thread_running:
-            ret, frame = self.read_sync()
-            if not ret:
-                break
+            ret = False
+            while not ret:
+            	ret, frame = self.read_sync()
+            	
+            #frame = frame[(self.orig_height-self.min_dim)//2:(self.orig_height+self.min_dim)//2,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] # crop
+        
+            composed_frame = np.zeros((self.min_dim,self.min_dim, 3), dtype=np.uint8) #double lower half
+            composed_frame[:self.min_dim//2,:]=frame[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2]
+        
+            #composed_frame = np.zeros((self.max_dim,self.max_dim, 3), dtype=np.uint8) #padding
+            #composed_frame.fill(255) # padding in grayscale
+            #composed_frame[(self.max_dim-self.orig_height)//2:(self.max_dim+self.orig_height)//2,(self.max_dim-self.orig_width)//2:(self.max_dim+self.orig_width)//2]=frame
+            #frame = composed_frame
+            
+            ret = False #double lower half
+            while not ret:
+            	ret, frame = self.read_sync()
+            	
+            composed_frame[-1-self.min_dim//2:-1,:]=frame[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] #double lower half
+            frame = composed_frame
+            
             self.latest_frame_info = ret, frame
         logging.info("continous_reader stopped.")
 
@@ -75,4 +102,6 @@ class TomateCameraSD():
             logging.exception(f"Error saving frame.")
 
     def get_dimensions(self):
-        return 3456, 4608 # considering 4K images
+        #return 3456, 4608 # considering 4K images
+        return self.min_dim, self.min_dim # crop or double lower half
+        #return self.max_dim, self.max_dim # padding
