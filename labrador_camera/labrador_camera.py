@@ -186,7 +186,7 @@ class LabradorWebcam(LabradorCameraCV):
                 time.sleep(1)
                 continue
             
-                ret = False
+            ret = False
             while not ret:
             	ret, frame = self.capture.read()
 
