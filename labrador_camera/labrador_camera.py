@@ -167,7 +167,7 @@ class LabradorWebcam(LabradorCameraCV):
             
             _ret, img2 = self.capture.read() #double lower half
             composed_frame[-1-self.min_dim//2:-1,:]=img2[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] #double lower half
-            img = composed
+            img = composed_frame
         
             return True , img
         
@@ -186,9 +186,11 @@ class LabradorWebcam(LabradorCameraCV):
                 time.sleep(1)
                 continue
                 
-            ret = False
+            ret, frame = self.capture.read()
             while not ret:
-            	ret, frame = self.capture.read()
+                self.capture.release()
+                self.capture = cv2.VideoCapture(self.device)
+                ret, frame = self.capture.read()
             	
             #frame = frame[(self.orig_height-self.min_dim)//2:(self.orig_height+self.min_dim)//2,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] # crop
         
