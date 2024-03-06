@@ -204,7 +204,8 @@ class LabradorWebcam(LabradorCameraCV):
             
             ret = False #double lower half
             while not ret:
-                self.capture.grab()
+                self.capture.release()
+                self.capture = cv2.VideoCapture(self.device)
                 ret, frame = self.capture.read()
             	
             composed_frame[-1-self.min_dim//2:-1,:]=frame[-1-self.min_dim//2:-1,(self.orig_width-self.min_dim)//2:(self.orig_width+self.min_dim)//2] #double lower half
