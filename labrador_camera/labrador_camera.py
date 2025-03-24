@@ -91,7 +91,7 @@ class LabradorWebcam(LabradorCameraCV):
                 self.set_resolution("elp")  #add ELP
                 self.capture.set(cv2.CAP_PROP_AUTO_EXPOSURE,1.0) #  add exposure control
                 self.capture.set(cv2.CAP_PROP_EXPOSURE,self.exposure) #  add exposure control
-                     
+   
                 self.start_unbuffer_thread()
         except Exception as e:
             logging.exception("Can't connect to camera {}".format(str(self.device)))
@@ -167,7 +167,7 @@ class LabradorWebcam(LabradorCameraCV):
                 except queue.Empty:
                     pass
             self.q.put(frame)
-            
+
             if (time.time() - aux1 > 1): #  add start exposure control
                 print("dummy")
                 light = np.mean(frame, axis=(0,1))
@@ -176,6 +176,5 @@ class LabradorWebcam(LabradorCameraCV):
                 self.exposure = int(self.exposure*(1.75-1.50*light))
                 self.capture.set(cv2.CAP_PROP_EXPOSURE,self.exposure)
                 aux1 = time.time() #  add end exposure control
-	            
+
         logging.info("unbuffer_reader stopped.")
-        
