@@ -91,7 +91,7 @@ class LabradorWebcam(LabradorCameraCV):
                 self.set_resolution("elp")  #add ELP
                 self.capture.set(cv2.CAP_PROP_AUTO_EXPOSURE,1.0) #  add exposure control
                 self.capture.set(cv2.CAP_PROP_EXPOSURE,self.exposure) #  add exposure control
-   
+
                 self.start_unbuffer_thread()
         except Exception as e:
             logging.exception("Can't connect to camera {}".format(str(self.device)))
@@ -124,7 +124,7 @@ class LabradorWebcam(LabradorCameraCV):
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, LabradorWebcam.resolutions[target_res]["height"])
         print("2")
 
-        # Show camera resolution after adjustment. It can be different from specified 
+        # Show camera resolution after adjustment. It can be different from specified
         # in command line due to limitations of camera
         logging.debug("Camera adjusted for image with width %s and height %s" % (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
