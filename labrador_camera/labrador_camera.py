@@ -163,17 +163,19 @@ class LabradorWebcam(LabradorCameraCV):
                 break
             if not self.q.empty():
                 try:
-                    self.q.get_nowait()   # discard previous (unprocessed) frame
+                    self.q.get_nowait() # discard previous (unprocessed) frame
                 except queue.Empty:
                     pass
             self.q.put(frame)
             
             if (time.time() - aux1 > 1): #  add start exposure control
-	            light = np.mean(frame, axis=(0,1))
-	            light = (0.114*light[0]+0.587*light[1]+0.299*light[2])/255
-	            #weights from opencv and normalised to [0;1]
-	            self.exposure = int(self.exposure*(1.75-1.50*light))
-	            self.capture.set(cv2.CAP_PROP_EXPOSURE,self.exposure)
-	            aux1 = time.time() #  add end exposure control
+                print("dummy")
+                light = np.mean(frame, axis=(0,1))
+                light = (0.114*light[0]+0.587*light[1]+0.299*light[2])/255
+                #weights from opencv and normalised to [0;1]
+                self.exposure = int(self.exposure*(1.75-1.50*light))
+                self.capture.set(cv2.CAP_PROP_EXPOSURE,self.exposure)
+                aux1 = time.time() #  add end exposure control
 	            
         logging.info("unbuffer_reader stopped.")
+        
